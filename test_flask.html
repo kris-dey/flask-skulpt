@@ -29,13 +29,13 @@ function builtinRead(x) {
 function runit() { 
    var prog = document.getElementById("yourcode").value; 
    var mypre = document.getElementById("output"); 
-   mypre.innerHTML = ''; 
    Sk.pre = "output";
-   Sk.configure({output:outf, read:builtinRead}); 
-   (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
-   var myPromise = Sk.misceval.asyncToPromise(function() {
-       return Sk.importMainWithBody("<stdin>", false, prog, true);
-   });
+   Sk.configure({output:function(text) {
+    mypre.innerHTML = mypre.innerHTML + "  " + text;
+   }, read:builtinRead}); 
+
+   var myPromise = Sk.misceval.asyncToPromise(
+       () => Sk.importMainWithBody("<stdin>", false, prog, true));
    myPromise.then(function(mod) {
        console.log('success');
    },
@@ -45,7 +45,7 @@ function runit() {
 } 
 </script> 
 
-<h3>Try This</h3> 
+<h3>Flask from Scratch</h3> 
 <form> 
 <textarea id="yourcode" cols="40" rows="10">
 from flask import Flask
@@ -55,18 +55,15 @@ app = Flask("basic app")
 if __name__ == '__main__':
   app.run()
 
-</textarea><br /> 
+</textarea><br /><br /> 
 <button type="button" onclick="runit()">Run</button> 
-</form> 
+</form>
 
-<div style="border:1px solid #000;">
-  <pre id="output" ></pre> 
+<br /> 
+<div style="border:1.2px solid #000;">
+  <pre id="output">
+  <b>Console</b><hr></pre> 
 </div>
 
-
-<!-- If you want turtle graphics include a canvas -->
-<div id="mycanvas"></div> 
-
 </body> 
-
 </html> 
