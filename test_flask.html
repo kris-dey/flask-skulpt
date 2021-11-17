@@ -32,6 +32,7 @@ function runit() {
    Sk.pre = "output";
    Sk.configure({output:function(text) {
     mypre.innerHTML = mypre.innerHTML + "  " + text;
+    console.log(text);
    }, read:builtinRead}); 
 
    var myPromise = Sk.misceval.asyncToPromise(
@@ -52,8 +53,16 @@ from flask import Flask
 
 app = Flask("basic app")
 
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    print("login here")
+
+@app.route("/signup")
+def signup():
+    print("signup here")
+    
 if __name__ == '__main__':
-  app.run()
+    app.run()
 
 </textarea><br /><br /> 
 <button type="button" onclick="runit()">Run</button> 
