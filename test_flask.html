@@ -32,13 +32,24 @@ function runit() {
    Sk.pre = "output";
    Sk.configure({output:function(text) {
     mypre.innerHTML = mypre.innerHTML + "  " + text;
-    console.log(text);
    }, read:builtinRead}); 
 
    var myPromise = Sk.misceval.asyncToPromise(
        () => Sk.importMainWithBody("<stdin>", false, prog, true));
    myPromise.then(function(mod) {
-       console.log('success');
+     
+     const app = Sk.builtin.getattr(mod, new Sk.builtin.str("app"));
+     const handleRouteFn = Sk.builtin.getattr(app, new Sk.builtin.str("handleRoute"));
+
+     var url_requested = document.getElementById("url_bar").value;
+     if (url_requested == ''){
+      url_requested = '/';
+     }
+     const pyString = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
+     console.log(Sk.ffi.remapToJs(pyString));
+
+     const tag_id = document.getElementById('embedded_browser');
+     tag_id.innerHTML = Sk.ffi.remapToJs(pyString);
    },
        function(err) {
        console.log(err.toString());
@@ -48,18 +59,25 @@ function runit() {
 
 <h3>Flask from Scratch</h3> 
 <form> 
-<textarea id="yourcode" cols="40" rows="10">
+<textarea id="yourcode" cols="50" rows="15">
 from flask import Flask
 
 app = Flask("basic app")
 
-@app.route("/login", methods=["POST", "GET"])
+@app.route("/lg", methods=["POST", "GET"])
 def login():
-    print("login here")
+    print("login got called with route lg")
+    return "<h1> Login Page </h1>"
 
 @app.route("/signup")
 def signup():
     print("signup here")
+    return "<h1> Sign-in Page </h1>"
+
+@app.route("/")
+def home():
+    print("home here")
+    return "<h1> Home Page </h1>"
     
 if __name__ == '__main__':
     app.run()
@@ -68,19 +86,33 @@ if __name__ == '__main__':
 <button type="button" onclick="runit()">Run</button> 
 </form>
 
-<br /> 
+<!-- <form>
+<label for="fname"><b>URL Bar</b></label> <br /> 
+<input type="text" id="url_bar">
+<button type="button" onclick="runit()"> &gt; </button> 
+</form> -->
+
 <div style="border:1.2px solid #000;">
-  <pre id="output">
-  <b>Console</b><hr></pre> 
+  <br>
+  <b>&ensp;Browser&emsp;</b>
+
+  <input type="text" id="url_bar">
+  <button type="button" onclick="runit()"> &gt; </button> 
+
+  <br>
+
+  <hr>
+  <pre id="embedded_browser" style="height: 100px;"></pre> 
+</div>
+
+<br />
+
+<div style="border:1.2px solid #000;">
+  <b>&ensp;Console</b><hr>
+  <pre id="output"></pre> 
 </div>
 
 <br /><br /> 
-
-<form> 
-<label for="fname"><b>URL Bar</b></label> <br /> 
-<input type="text" id="url_bar">
-<button type="button"> &gt; </button> 
-</form>
 
 </body> 
 </html> 
