@@ -1,0 +1,23 @@
+
+
+<form>
+	
+<textarea id="yourcode" cols="50" rows="15">
+
+<html>
+<head>
+  <title>{{ title }}</title>
+</head>
+<body>
+<ul>
+  {% for item in links %}
+  <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+  {% endfor %}
+</ul>
+<p>{{ intro }}</p>
+</body>
+</html>
+
+</textarea><br /><br /> 
+<button type="button" onclick="runit()">Run</button> 
+</form>

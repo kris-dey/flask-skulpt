@@ -1,0 +1,36 @@
+<script src="jinja.js"></script>
+
+<script type="text/javascript"> 
+function compile() { 
+	var prog = document.getElementById("yourcode").value; 
+	console.log(
+		jinja.compile(prog, {}).render({
+			title: "yo", 
+			links: [
+				{href: "link1", caption:"cap1"}, 
+				{href: "link1", caption:"cap1"}
+			]}).toString()
+	)
+}
+
+</script>
+
+<form> 
+<textarea id="yourcode" cols="50" rows="15">
+<html>
+<head>
+  <title>{{ title }}</title>
+</head>
+<body>
+<ul>
+  {% for item in links %}
+  <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+  {% endfor %}
+</ul>
+<p>{{ intro }}</p>
+</body>
+</html>
+
+</textarea><br /><br /> 
+<button type="button" onclick="compile()">Run</button> 
+</form>
