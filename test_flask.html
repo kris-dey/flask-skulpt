@@ -9,6 +9,7 @@
 <body> 
 
 <script type="text/javascript"> 
+
 // output functions are configurable.  This one just appends some text
 // to a pre element.
 function outf(text) { 
@@ -21,6 +22,8 @@ function builtinRead(x) {
     return Sk.builtinFiles["files"][x];
 }
 
+var compiledMod;
+
 // Here's everything you need to run a python program in skulpt
 // grab the code from your textarea
 // get a reference to your pre element for output
@@ -30,6 +33,7 @@ function runit() {
    var prog = document.getElementById("yourcode").value; 
    var mypre = document.getElementById("output"); 
    Sk.pre = "output";
+   mypre.innerHTML = "";
    Sk.configure({output:function(text) {
     mypre.innerHTML = mypre.innerHTML + "  " + text;
    }, read:builtinRead}); 
@@ -37,24 +41,37 @@ function runit() {
    var myPromise = Sk.misceval.asyncToPromise(
        () => Sk.importMainWithBody("<stdin>", false, prog, true));
    myPromise.then(function(mod) {
-     
-     const app = Sk.builtin.getattr(mod, new Sk.builtin.str("app"));
-     const handleRouteFn = Sk.builtin.getattr(app, new Sk.builtin.str("handleRoute"));
 
-     var url_requested = document.getElementById("url_bar").value;
-     if (url_requested == ''){
-      url_requested = '/';
-     }
-     const pyString = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
-     console.log(Sk.ffi.remapToJs(pyString));
+     compiledMod = mod
 
-     const tag_id = document.getElementById('embedded_browser');
-     tag_id.innerHTML = Sk.ffi.remapToJs(pyString);
+     var url_requested = '/'
+     document.getElementById("url_bar").value = '/';
+
+     renderPage()
    },
        function(err) {
        console.log(err.toString());
    });
-} 
+}
+
+function goURL() { 
+   if (compiledMod != null) {
+    renderPage()
+   } else {
+    document.getElementById("output").innerHTML = "  Please click 'Run' to run Flask web app first."
+   }
+}  
+
+function renderPage() {
+  const app = Sk.builtin.getattr(compiledMod, new Sk.builtin.str("app"));
+  const handleRouteFn = Sk.builtin.getattr(app, new Sk.builtin.str("handleRoute"));
+
+  var url_requested = document.getElementById("url_bar").value;
+  const pyString = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
+
+  const tag_id = document.getElementById('embedded_browser');
+  tag_id.innerHTML = Sk.ffi.remapToJs(pyString);
+}
 </script> 
 
 <h3>Flask from Scratch</h3> 
@@ -67,17 +84,17 @@ app = Flask("basic app")
 @app.route("/lg", methods=["POST", "GET"])
 def login():
     print("login got called with route lg")
-    return "<h1> Login Page </h1>"
+    return "<h1> Login Page </h1><i>&nbspthis is the login page</i>"
 
 @app.route("/signup")
 def signup():
     print("signup here")
-    return "<h1> Sign-in Page </h1>"
+    return "<h1> Sign-in Page </h1><i>&nbspthis is the signin page</i>"
 
 @app.route("/")
 def home():
     print("home here")
-    return "<h1> Home Page </h1>"
+    return "<h1> Home Page </h1><i>&nbspthis is the home page</i>"
     
 if __name__ == '__main__':
     app.run()
@@ -97,7 +114,7 @@ if __name__ == '__main__':
   <b>&ensp;Browser&emsp;</b>
 
   <input type="text" id="url_bar">
-  <button type="button" onclick="runit()"> &gt; </button> 
+  <button type="button" id="url_bar_button" onclick="goURL()"> &gt; </button> 
 
   <br>
 
@@ -116,3 +133,13 @@ if __name__ == '__main__':
 
 </body> 
 </html> 
+
+<script type="text/javascript"> 
+
+document.getElementById('url_bar').onkeypress=function(e){
+    if(e.keyCode==13){
+        document.getElementById('url_bar_button').click();
+    }
+}
+
+</script>
