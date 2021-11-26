@@ -59,13 +59,8 @@ function runit() {
    var myPromise = Sk.misceval.asyncToPromise(
        () => Sk.importMainWithBody("<stdin>", false, prog, true));
    myPromise.then(function(mod) {
-
      compiledMod = mod
-
-     var url_requested = '/'
-     document.getElementById("url_bar").value = '/';
-
-     renderPage()
+     renderPage('/')
    },
        function(err) {
        console.log(err.toString());
@@ -74,26 +69,45 @@ function runit() {
 
 function goURL() { 
    if (compiledMod != null) {
-    renderPage()
+    renderPage(document.getElementById("url_bar").value)
    } else {
     document.getElementById("output").innerHTML = "  Please click 'Run' to run Flask web app first."
    }
 }  
 
-function renderPage() {
+function renderPage(url_requested) {
   const app = Sk.builtin.getattr(compiledMod, new Sk.builtin.str("app"));
   const handleRouteFn = Sk.builtin.getattr(app, new Sk.builtin.str("handleRoute"));
 
-  var url_requested = document.getElementById("url_bar").value;
-  const pyString = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
+  document.getElementById("url_bar").value = url_requested;
+  const pyDict = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
 
-  const tag_id = document.getElementById('embedded_browser');
-  tag_id.innerHTML = Sk.ffi.remapToJs(pyString);
+  var jsDict = Sk.ffi.remapToJs(pyDict)
+  console.log(jsDict);
+  var jsHtmlString = fixURL(jsDict["html"])
+
+  const tag_id = document.getElementById("embedded_browser");
+  tag_id.innerHTML = Sk.ffi.remapToJs(jsHtmlString);
+}
+
+function fixURL(jsHtmlString){
+  var el = document.createElement("html");
+  el.innerHTML = jsHtmlString;
+  
+  const allLinkTags = el.getElementsByTagName("a");
+  for (let i = 0; i < allLinkTags.length; i++) {
+    let hrefValue = allLinkTags[i].getAttribute("href");
+    allLinkTags[i].setAttribute("href", "#");
+
+    const newAction = "renderPage('" + hrefValue + "')"; 
+    allLinkTags[i].setAttribute("onclick", newAction);
+  }
+  return el.innerHTML;
 }
 </script> 
 
 <h2>Flask from Scratch</h2> 
-<div id='ide'>
+<div id="ide">
 <form> 
 <textarea id="yourcode" cols="80" rows="22" style="height: 500px;">
 from flask import Flask
@@ -103,17 +117,17 @@ app = Flask("basic app")
 @app.route("/lg", methods=["POST", "GET"])
 def login():
     print("login got called with route lg")
-    return "<h1> Login Page </h1><i>&nbspthis is the login page</i>"
+    return "<h1> Login Page </h1><i> this is the login page</i><br> <a href='/'>Home</a> <a href='/signup'>Signup</a>"
 
 @app.route("/signup")
 def signup():
     print("signup here")
-    return "<h1> Sign-in Page </h1><i>&nbspthis is the signin page</i>"
+    return "<h1> Sign-in Page </h1><i> this is the signin page</i><br> <a href='/lg'>Login</a> <a href='/'>Home</a>"
 
 @app.route("/")
 def home():
     print("home here")
-    return "<h1> Home Page </h1><i>&nbspthis is the home page</i>"
+    return "<h1> Home Page </h1><i> this is the home page</i><br> <a href='/lg'>Login</a> <a href='/signup'>Signup</a>""
     
 if __name__ == '__main__':
     app.run()
