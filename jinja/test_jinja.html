@@ -4,12 +4,7 @@
 function compile() { 
 	var prog = document.getElementById("yourcode").value; 
 	console.log(
-		jinja.compile(prog, {}).render({
-			title: "yo", 
-			links: [
-				{href: "link1", caption:"cap1"}, 
-				{href: "link1", caption:"cap1"}
-			]}).toString()
+		jinja.compile(prog, {}).render({result: {'phy':50,'che':60,'maths':70}}).toString()
 	)
 }
 

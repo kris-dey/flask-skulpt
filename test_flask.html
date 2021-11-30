@@ -1,8 +1,12 @@
 <html> 
 <head> 
+
+<title>Flask from Scratch</title>
+
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" type="text/javascript"></script> 
 <script src="skulpt/dist/skulpt.min.js" type="text/javascript"></script> 
-<script src="skulpt/dist/skulpt-stdlib.js" type="text/javascript"></script> 
+<script src="skulpt/dist/skulpt-stdlib.js" type="text/javascript"></script>
+<script src="jinja/jinja.js" type="text/javascript"></script> 
 <style>
 #ide {
   float: left;
@@ -85,6 +89,11 @@ function renderPage(url_requested) {
   var jsDict = Sk.ffi.remapToJs(pyDict)
   console.log(jsDict);
   var jsHtmlString = fixURL(jsDict["html"])
+  if ("template_params" in jsDict) {
+    console.log(jsDict["template_params"]);
+    jsHtmlString = jinja.compile(jsHtmlString, {}).render(jsDict["template_params"]).toString()
+  }
+  console.log(jsHtmlString);
 
   const tag_id = document.getElementById("embedded_browser");
   tag_id.innerHTML = Sk.ffi.remapToJs(jsHtmlString);
@@ -110,7 +119,7 @@ function fixURL(jsHtmlString){
 <div id="ide">
 <form> 
 <textarea id="yourcode" cols="80" rows="22" style="height: 500px;">
-from flask import Flask
+from flask import Flask, abort, render_template
 
 app = Flask("basic app")
 
@@ -128,6 +137,22 @@ def signup():
 def home():
     print("home here")
     return "<h1> Home Page </h1><i> this is the home page</i><br> <a href='/lg'>Login</a> <a href='/signup'>Signup</a>""
+
+@app.route("/404")
+def signup():
+    print("404 error here")
+    return abort(404)
+
+@app.route("/template")
+def template():
+    print("templating")
+    return render_template("hi {{ name }}, {{ age }}", name="kris", age=23)
+
+@app.route('/result')
+def result():
+   dict = {'phy':50,'che':60,'maths':70}
+   html_text = '<html><body>{% for key in result %}<th>Key: {{ key }}</th> <td> | Value: {{ result[key] }}</td> <br>{% endfor %}</body></html>'
+   return render_template(html_text, result = dict)
     
 if __name__ == '__main__':
     app.run()
