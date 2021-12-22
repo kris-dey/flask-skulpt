@@ -82,14 +82,13 @@ function renderPage(url_requested) {
   const pyDict = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
 
   var jsDict = Sk.ffi.remapToJs(pyDict)
-  console.log(jsDict);
+  console.log("Returned Dictionary: " + jsDict);
   var jsHtmlString = fixURL(jsDict["html"])
   jsHtmlString = fixForms(jsHtmlString)
   if ("template_params" in jsDict) {
-    console.log(jsDict["template_params"]);
     jsHtmlString = jinja.compile(jsHtmlString, {}).render(jsDict["template_params"]).toString()
   }
-  console.log(jsHtmlString);
+  console.log("Rendered HTML: " + jsHtmlString);
 
   const tag_id = document.getElementById("embedded_browser");
   tag_id.innerHTML = Sk.ffi.remapToJs(jsHtmlString);
