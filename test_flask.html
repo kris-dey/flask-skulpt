@@ -46,11 +46,6 @@ function builtinRead(x) {
 
 var compiledMod;
 
-// Here's everything you need to run a python program in skulpt
-// grab the code from your textarea
-// get a reference to your pre element for output
-// configure the output function
-// call Sk.importMainWithBody()
 function runit() { 
    var prog = document.getElementById("yourcode").value; 
    var mypre = document.getElementById("output"); 
@@ -89,6 +84,7 @@ function renderPage(url_requested) {
   var jsDict = Sk.ffi.remapToJs(pyDict)
   console.log(jsDict);
   var jsHtmlString = fixURL(jsDict["html"])
+  jsHtmlString = fixForms(jsHtmlString)
   if ("template_params" in jsDict) {
     console.log(jsDict["template_params"]);
     jsHtmlString = jinja.compile(jsHtmlString, {}).render(jsDict["template_params"]).toString()
@@ -113,30 +109,61 @@ function fixURL(jsHtmlString){
   }
   return el.innerHTML;
 }
+
+function fixForms(jsHtmlString){
+  var el = document.createElement("html");
+  el.innerHTML = jsHtmlString;
+
+  var all_forms = el.getElementsByTagName("form");
+  function handleForm(event) { 
+    event.preventDefault();
+  }
+
+  for (var i = 0; i < all_forms.length; i++) {
+    if (all_forms[i].id == "codeForm") continue
+
+    all_forms[i].addEventListener('submit', handleForm);
+
+    route = all_forms[i].getAttribute("action")
+    const newAction = "onFormSubmit('" + all_forms[i].id + "', '" + route + "')"; 
+    all_forms[i].setAttribute("onclick", newAction);
+    all_forms[i].setAttribute("action", "#");
+  }
+
+  return el.innerHTML;
+}
+
+function onFormSubmit(formID, url_requested) {
+	var formData = {}
+	var inputs = document.getElementById(formID);
+	for (var i = inputs.length - 1; i >= 0; i--) {
+		if (inputs[i].type == "submit")
+			continue;
+		formData[inputs[i].name] = inputs[i].value
+	}
+
+	console.log(formData)
+  renderPage(url_requested)
+}
 </script> 
 
 <h2>Flask from Scratch</h2> 
 <div id="ide">
-<form> 
+<form id="codeForm"> 
 <textarea id="yourcode" cols="80" rows="22" style="height: 500px;">
 from flask import Flask, abort, render_template, redirect, url_for
 
 app = Flask("basic app")
 
-@app.route("/lg", methods=["POST", "GET"])
-def login():
-    print("login got called with route lg")
-    return "<h1> Login Page </h1><i> this is the login page</i><br> <a href='/'>Home</a> <a href='/signup'>Signup</a>"
-
 @app.route("/signup")
 def signup():
     print("signup here")
-    return "<h1> Sign-in Page </h1><i> this is the signin page</i><br> <a href='/lg'>Login</a> <a href='/'>Home</a>"
+    return "<h1> Sign-in Page </h1><i> this is the signin page</i><br> <a href='/login'>Login</a> <a href='/'>Home</a>"
 
 @app.route("/")
 def home():
     print("home here")
-    return "<h1> Home Page </h1><i> this is the home page</i><br> <a href='/lg'>Login</a> <a href='/signup'>Signup</a>""
+    return "<h1> Home Page </h1><i> this is the home page</i><br> <a href='/login'>Login</a> <a href='/signup'>Signup</a>""
 
 @app.route("/404")
 def error404():
@@ -163,6 +190,10 @@ app.add_url_route('/r', result, result)
 @app.route('/blog/<user>/<int:postID>/<float:weight>')
 def dynamic(user, postID, weight):
     return f"this user {user} with ID {postID} and weight {weight} kg"
+
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    return '<form id="1" action="/"> <label for="fname">First name:</label><br> <input type="text" id="fname" name="fname" value="John"><br> <br> <input type="submit" value="Submit"> </form>'
 
 if __name__ == '__main__':
     app.run()

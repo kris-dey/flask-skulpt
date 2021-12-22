@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>HTML Forms</h2>
+
+<form id="mdfadas" action = "/login" oninput="x.value=parseInt(a.value)+parseInt(b.value)">
+  0
+  <input type="range" id="a" name="a" value="50">
+  100 +
+  <input type="number" id="b" name="b" value="50">
+  =
+  <output name="x" for="a b"></output>
+  <br><br>
+  <input type="submit">
+</form>
+
+
+<script type="text/javascript"> 
+
+var all_forms = document.getElementsByTagName("form");
+function handleForm(event) { 
+	event.preventDefault();
+}
+
+for (var i = all_forms.length - 1; i >= 0; i--) {
+	all_forms[i].addEventListener('submit', handleForm);
+
+	route = all_forms[i].getAttribute("action")
+    const newAction = "onFormSubmit('" + all_forms[i].id + "', '" + route + "')"; 
+    all_forms[i].setAttribute("onclick", newAction);
+}
+
+function onFormSubmit(formID, url_requested) {
+	var formData = {}
+	var inputs = document.getElementById(formID);
+	for (var i = inputs.length - 1; i >= 0; i--) {
+		if (inputs[i].type == "submit")
+			continue;
+		formData[inputs[i].name] = inputs[i].value
+		console.log(inputs[i].name + " -> " + inputs[i].value)
+	}
+
+	console.log(formData)
+}
+
+
+</script>
+
+</body>
+</html>
+
+
