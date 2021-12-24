@@ -74,15 +74,18 @@ function goURL() {
    }
 }  
 
-function renderPage(url_requested) {
+function renderPage(url_requested, requestData) {
   const app = Sk.builtin.getattr(compiledMod, new Sk.builtin.str("app"));
   const handleRouteFn = Sk.builtin.getattr(app, new Sk.builtin.str("handleRoute"));
-
   document.getElementById("url_bar").value = url_requested;
-  const pyDict = handleRouteFn.tp$call([new Sk.builtin.str(url_requested)], {});
+
+  if (!requestData) requestData = {}
+  if (!("method" in requestData)) requestData["method"] = "GET";
+
+  const pyDict = handleRouteFn.tp$call([new Sk.builtin.str(url_requested), Sk.ffi.remapToPy(requestData)], {});
 
   var jsDict = Sk.ffi.remapToJs(pyDict)
-  console.log("Returned Dictionary: " + jsDict);
+  console.log(jsDict);
   var jsHtmlString = fixURL(jsDict["html"])
   jsHtmlString = fixForms(jsHtmlString)
   if ("template_params" in jsDict) {
@@ -140,9 +143,17 @@ function onFormSubmit(formID, url_requested) {
 			continue;
 		formData[inputs[i].name] = inputs[i].value
 	}
+  formMethod = inputs.getAttribute("method")
+  if (!formMethod){
+    formMethod = "GET"
+  }
 
-	console.log(formData)
-  renderPage(url_requested)
+  requestData = {
+    "method": formMethod,
+    "data": formData,
+  }
+
+  renderPage(url_requested, requestData)
 }
 </script> 
 
@@ -150,7 +161,7 @@ function onFormSubmit(formID, url_requested) {
 <div id="ide">
 <form id="codeForm"> 
 <textarea id="yourcode" cols="80" rows="22" style="height: 500px;">
-from flask import Flask, abort, render_template, redirect, url_for
+from flask import Flask, abort, render_template, redirect, url_for, request
 
 app = Flask("basic app")
 
@@ -192,7 +203,11 @@ def dynamic(user, postID, weight):
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
-    return '<form id="1" action="/"> <label for="fname">First name:</label><br> <input type="text" id="fname" name="fname" value="John"><br> <br> <input type="submit" value="Submit"> </form>'
+  if request.method == "POST":
+    return f'Hi, {request.form["name"]}'
+  elif request.method == "GET":
+    return '<form id="1" action="/login" method="POST"> <label for="name">First name:</label><br> <input type="text" id="fname" name="fname" value="John"><br> <br> <input type="submit" value="Submit"> </form>'
+  return "login here - request method not supported."
 
 if __name__ == '__main__':
     app.run()
