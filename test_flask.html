@@ -82,6 +82,9 @@ function renderPage(url_requested, requestData) {
   if (!requestData) requestData = {}
   if (!("method" in requestData)) requestData["method"] = "GET";
 
+  console.log(url_requested)
+  console.log(requestData)
+
   const pyDict = handleRouteFn.tp$call([new Sk.builtin.str(url_requested), Sk.ffi.remapToPy(requestData)], {});
 
   var jsDict = Sk.ffi.remapToJs(pyDict)
@@ -112,6 +115,8 @@ function fixURL(jsHtmlString){
   return el.innerHTML;
 }
 
+var formIdToMethod = {}
+
 function fixForms(jsHtmlString){
   var el = document.createElement("html");
   el.innerHTML = jsHtmlString;
@@ -121,8 +126,19 @@ function fixForms(jsHtmlString){
     event.preventDefault();
   }
 
+  var idCounter = 8634;   // A very random counter for forms with no IDs.
   for (var i = 0; i < all_forms.length; i++) {
     if (all_forms[i].id == "codeForm") continue
+    if (all_forms[i].id == "") {
+      all_forms[i].id = String(idCounter);
+      all_forms[i].setAttribute("id", all_forms[i].id);
+      idCounter++;
+    }
+
+    var formMethod = all_forms[i].getAttribute("method")
+    if (formMethod == "") formMethod = "GET"
+    formIdToMethod[all_forms[i].id] = formMethod;
+    all_forms[i].removeAttribute("method")
 
     all_forms[i].addEventListener('submit', handleForm);
 
@@ -141,11 +157,11 @@ function onFormSubmit(formID, url_requested) {
 	for (var i = inputs.length - 1; i >= 0; i--) {
 		if (inputs[i].type == "submit")
 			continue;
-		formData[inputs[i].name] = inputs[i].value
+		formData[inputs[i].name] = inputs[i].value;
 	}
-  formMethod = inputs.getAttribute("method")
+  formMethod = formIdToMethod[formID];
   if (!formMethod){
-    formMethod = "GET"
+    formMethod = "GET";
   }
 
   requestData = {
@@ -204,9 +220,11 @@ def dynamic(user, postID, weight):
 @app.route("/login", methods=["POST", "GET"])
 def login():
   if request.method == "POST":
+    print("login here - POST request")
     return f'Hi, {request.form["name"]}'
   elif request.method == "GET":
-    return '<form id="1" action="/login" method="POST"> <label for="name">First name:</label><br> <input type="text" id="fname" name="fname" value="John"><br> <br> <input type="submit" value="Submit"> </form>'
+    print("login here - GET request")
+    return '<form id="1" action="/login" method="POST"> <label for="name">First name:</label><br> <input type="text" id="name" name="name" value="John"><br> <br> <input type="submit" value="Submit"> </form>'
   return "login here - request method not supported."
 
 if __name__ == '__main__':
